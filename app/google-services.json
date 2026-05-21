@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "483840079336",
+    "project_id": "com-gustavo-brilhante-ap-4b986",
+    "storage_bucket": "com-gustavo-brilhante-ap-4b986.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:483840079336:android:cda95f07f17998a7cfe05d",
+        "android_client_info": {
+          "package_name": "com.gustavo.brilhante.apptestgoogleadmanager"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAq5mvC39qLVJKJwTgm5u9bNJANpysqpzg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
