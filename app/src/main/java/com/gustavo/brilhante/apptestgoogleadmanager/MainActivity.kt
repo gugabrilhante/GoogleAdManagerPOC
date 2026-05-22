@@ -67,10 +67,11 @@ class MainActivity : ComponentActivity() {
             context = this,
             adUnitId = adUnitId,
             customFormatId = customFormatId,
+            numberOfAds = 5,
             customTargeting = customTargeting,
             onAdLoaded = { customNativeAd ->
                 runOnUiThread {
-                    viewModel.setAd(customNativeAd)
+                    viewModel.addAd(customNativeAd)
                 }
             },
             onAdFailed = { error ->

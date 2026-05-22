@@ -43,6 +43,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.android.libraries.ads.mobile.sdk.nativead.CustomNativeAd
 
 val images = arrayOf(
     R.drawable.baked_goods_1,
@@ -65,7 +66,7 @@ fun BakingScreen(
     var prompt by rememberSaveable { mutableStateOf(placeholderPrompt) }
     var result by rememberSaveable { mutableStateOf(placeholderResult) }
     val uiState by bakingViewModel.uiState.collectAsState()
-    val adState by bakingViewModel.adState.collectAsState()
+    val adsState by bakingViewModel.adsState.collectAsState()
     val resources = LocalResources.current
 
     Scaffold { innerPadding ->
@@ -82,69 +83,19 @@ fun BakingScreen(
                 )
             }
 
-            // Primeira Receita
-            item {
-                RecipeItem(0, images[0], imageDescriptions[0], selectedImage.intValue) {
-                    selectedImage.intValue = 0
-                }
-            }
-
-            // O ANÚNCIO (Item independente na lista)
-            item {
-                val ad = adState
-                if (ad != null) {
-                    // aspectRatio is available synchronously after the ad loads.
-                    // Fallback to 16:9 if the server doesn't report a ratio.
-                    val aspectRatio = ad.mediaContent?.aspectRatio?.takeIf { it > 0f } ?: (16f / 9f)
-
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp)
-                            .background(Color(0xFFF9F9F9))
-                    ) {
-                        Text(
-                            text = "Publicidade",
-                            modifier = Modifier.padding(start = 16.dp, top = 8.dp, bottom = 4.dp),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = Color.Gray
-                        )
-                        // Drive the container size from the ad's aspect ratio so the
-                        // MediaView always gets a non-zero canvas — no fixed dp needed.
-                        AndroidView(
-                            factory = { ctx ->
-                                CustomNativeAdManager()
-                                    .displayVideoCustomNativeAd(ad, ctx)
-                                    .also { view ->
-                                        // Run after the first draw frame so the Surface
-                                        // backing the MediaView is ready for playback.
-                                        view.post { (view.tag as? Runnable)?.run() }
-                                    }
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .aspectRatio(aspectRatio)
-                        )
-                    }
-                } else {
-                    // Placeholder enquanto carrega
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .aspectRatio(16f / 9f)
-                            .background(Color(0xFFF0F0F0)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text("Buscando anúncio...", color = Color.Gray)
-                    }
-                }
-            }
-
-            // Restante das Receitas
-            itemsIndexed(images) { index, image ->
-                if (index > 0) {
+            images.forEachIndexed { index, image ->
+                item {
                     RecipeItem(index, image, imageDescriptions[index], selectedImage.intValue) {
                         selectedImage.intValue = index
+                    }
+                }
+
+                // Insere um anúncio após cada imagem
+                item {
+                    if (index < adsState.size) {
+                        AdItem(adsState[index])
+                    } else {
+                        AdPlaceholder()
                     }
                 }
             }
@@ -161,6 +112,50 @@ fun BakingScreen(
                 BakingResult(uiState, result)
             }
         }
+    }
+}
+
+@Composable
+fun AdItem(ad: CustomNativeAd) {
+    val aspectRatio = ad.mediaContent?.aspectRatio?.takeIf { it > 0f } ?: (16f / 9f)
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
+            .background(Color(0xFFF9F9F9))
+    ) {
+        Text(
+            text = "Publicidade",
+            modifier = Modifier.padding(start = 16.dp, top = 8.dp, bottom = 4.dp),
+            style = MaterialTheme.typography.labelSmall,
+            color = Color.Gray
+        )
+        AndroidView(
+            factory = { ctx ->
+                CustomNativeAdManager()
+                    .displayVideoCustomNativeAd(ad, ctx)
+                    .also { view ->
+                        view.post { (view.tag as? Runnable)?.run() }
+                    }
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(aspectRatio)
+        )
+    }
+}
+
+@Composable
+fun AdPlaceholder() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .aspectRatio(16f / 9f)
+            .background(Color(0xFFF0F0F0)),
+        contentAlignment = Alignment.Center
+    ) {
+        Text("Buscando anúncio...", color = Color.Gray)
     }
 }
 

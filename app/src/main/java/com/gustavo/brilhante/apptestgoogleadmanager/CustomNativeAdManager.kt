@@ -25,6 +25,7 @@ class CustomNativeAdManager {
         context: Context,
         adUnitId: String,
         customFormatId: String,
+        numberOfAds: Int = 1,
         customTargeting: Map<String, Any> = emptyMap(),
         onAdLoaded: (CustomNativeAd) -> Unit,
         onAdFailed: (LoadAdError) -> Unit = {}
@@ -46,9 +47,8 @@ class CustomNativeAdManager {
 
         val adRequest = builder.build()
 
-        NativeAdLoader.load(adRequest, object : NativeAdLoaderCallback {
+        NativeAdLoader.load(adRequest, numberOfAds, object : NativeAdLoaderCallback {
             override fun onCustomNativeAdLoaded(customNativeAd: CustomNativeAd) {
-                loadedCustomNativeAd = customNativeAd
                 onAdLoaded(customNativeAd)
             }
 
