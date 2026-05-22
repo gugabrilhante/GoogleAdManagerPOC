@@ -1,8 +1,8 @@
 # AppTestGoogleAdManager 🚀
 
-Este projeto é uma **Prova de Conceito (PoC)** para demonstrar a integração do **Google Ad Manager** em um aplicativo Android moderno, utilizando **Jetpack Compose** e o formato de **Custom Native Ads (Anúncios Nativos Personalizados)**.
+This project is a **Proof of Concept (PoC)** to demonstrate **Google Ad Manager** integration in a modern Android application, using **Jetpack Compose** and the **Custom Native Ads** format.
 
-O objetivo principal é validar a exibição do formato "Shortz" (vídeos curtos) integrados de forma fluida em uma lista de conteúdo.
+The main goal is to validate the display of the "Shortz" format (short videos) seamlessly integrated into a content list.
 
 ## 📱 Demo
 
@@ -10,21 +10,21 @@ O objetivo principal é validar a exibição do formato "Shortz" (vídeos curtos
 |--------------------------|
 | <img src="docs/shortz_demo.gif" width="100%" alt="Shortz Video Demo"> |
 
-> *Nota: Os GIFs acima são ilustrativos para esta documentação.*
+> *Note: The GIFs above are illustrative for this documentation.*
 
 ---
 
-## 🛠️ Tecnologias Utilizadas
+## 🛠️ Technologies Used
 
 - **Kotlin** & **Jetpack Compose**
 - **Google Mobile Ads SDK (GAM)**: `com.google.android.libraries.ads.mobile.sdk:ads-mobile-sdk:1.1.0`
-- **Firebase AI (Gemini)**: Utilizado para funcionalidades de análise de imagem no contexto da aplicação de exemplo.
-- **Coroutines & Flow**: Para gerenciamento de estado assíncrono.
+- **Firebase AI (Gemini)**: Used for image analysis features within the sample application context.
+- **Coroutines & Flow**: For asynchronous state management.
 
-## 🏗️ Implementação
+## 🏗️ Implementation
 
-### 1. Inicialização do SDK
-O SDK é inicializado na `MainActivity` utilizando um ID de aplicação placeholder. O carregamento de anúncios só inicia após o callback de sucesso da inicialização.
+### 1. SDK Initialization
+The SDK is initialized in `MainActivity` using a placeholder application ID. Ad loading only starts after the successful initialization callback.
 
 ```kotlin
 val initializationConfig = InitializationConfig.Builder("ca-app-pub-3940256099942544~3347511713")
@@ -36,13 +36,13 @@ MobileAds.initialize(this, initializationConfig) {
 ```
 
 ### 2. Custom Native Ad Manager
-Criamos um `CustomNativeAdManager` para centralizar a lógica de:
-- **Carregamento**: Configuração do `NativeAdRequest` com `customFormatId` e `customTargeting`.
-- **Renderização**: Inflagem do layout XML (`layout_custom_native_ad.xml`) e vinculação dos assets do anúncio (Headline, Body, MediaContent).
-- **Suporte a Vídeo**: Uso do `MediaView` para renderizar o conteúdo de vídeo do Shortz, com controle de autoplay.
+We created a `CustomNativeAdManager` to centralize the logic for:
+- **Loading**: Configuring the `NativeAdRequest` with `customFormatId` and `customTargeting`.
+- **Rendering**: Inflating the XML layout (`layout_custom_native_ad.xml`) and binding ad assets (Headline, Body, MediaContent).
+- **Video Support**: Using `MediaView` to render Shortz video content, with autoplay control.
 
-### 3. Integração com Jetpack Compose
-Os anúncios são exibidos dentro de um `LazyColumn` no `BakingScreen`. Utilizamos `AndroidView` para integrar o componente nativo do SDK:
+### 3. Jetpack Compose Integration
+Ads are displayed within a `LazyColumn` in `BakingScreen`. We use `AndroidView` to integrate the native SDK component:
 
 ```kotlin
 AndroidView(
@@ -53,21 +53,21 @@ AndroidView(
 )
 ```
 
-## 📋 Funcionalidades Implementadas
+## 📋 Implemented Features
 
-- [x] Inicialização do Google Mobile Ads SDK.
-- [x] Carregamento de múltiplos anúncios nativos personalizados.
-- [x] Suporte a Custom Targeting (`tvg_pos: SHORTZ`).
-- [x] Renderização de MediaContent (Vídeo) com proporção dinâmica.
-- [x] Controle de Impressões e Cliques.
-- [x] Placeholder de carregamento enquanto o anúncio não está pronto.
+- [x] Google Mobile Ads SDK initialization.
+- [x] Loading multiple custom native ads.
+- [x] Custom Targeting support (`tvg_pos: SHORTZ`).
+- [x] MediaContent (Video) rendering with dynamic aspect ratio.
+- [x] Impression and Click tracking.
+- [x] Loading placeholder while the ad is not ready.
 
-## 🚀 Como Executar
+## 🚀 How to Run
 
-1. Clone o repositório.
-2. Certifique-se de ter o arquivo `google-services.json` (se necessário para o Firebase).
-3. Sincronize o Gradle.
-4. Execute o app em um emulador ou dispositivo físico.
+1. Clone the repository.
+2. Ensure you have the `google-services.json` file (if required for Firebase).
+3. Sync Gradle.
+4. Run the app on an emulator or physical device.
 
 ---
-Desenvolvido como referência técnica para implementações de Google Ad Manager.
+Developed as a technical reference for Google Ad Manager implementations.
