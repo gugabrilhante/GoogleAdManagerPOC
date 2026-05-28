@@ -10,6 +10,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import com.google.android.libraries.ads.mobile.sdk.common.LoadAdError
 import com.google.android.libraries.ads.mobile.sdk.nativead.CustomNativeAd
+import com.google.android.libraries.ads.mobile.sdk.common.VideoController
 import com.google.android.libraries.ads.mobile.sdk.nativead.MediaView
 import com.google.android.libraries.ads.mobile.sdk.nativead.NativeAd.NativeAdType
 import com.google.android.libraries.ads.mobile.sdk.nativead.NativeAdAssetNames
@@ -98,7 +99,13 @@ class CustomNativeAdManager {
             // view.post() runs after the next draw frame, by which time MediaView
             // has a valid Surface to render onto (avoids the black screen).
             if (mediaContent.hasVideoContent) {
-                adView.tag = Runnable { mediaContent.videoController?.play() }
+                val videoController = mediaContent.videoController
+                videoController?.videoLifecycleCallbacks = object : VideoController.VideoLifecycleCallbacks {
+                    override fun onVideoEnd() {
+                        videoController.play()
+                    }
+                }
+                adView.tag = Runnable { videoController?.play() }
             }
             Log.d("AdManager", "MediaView renderizado. AspectRatio: ${mediaContent.aspectRatio}")
         } else {
