@@ -135,9 +135,9 @@ fun AdItem(ad: CustomNativeAd) {
             color = Color.Gray
         )
         AndroidView(
-            factory = { ctx ->
+            factory = { context ->
                 CustomNativeAdManager()
-                    .displayVideoCustomNativeAd(ad, ctx, cropToFill = true)
+                    .displayVideoCustomNativeAd(ad, context, cropToFill = true)
                     .also { view ->
                         view.post { (view.tag as? Runnable)?.run() }
                     }
