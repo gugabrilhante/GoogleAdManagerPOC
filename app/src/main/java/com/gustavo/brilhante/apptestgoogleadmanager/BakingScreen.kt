@@ -7,6 +7,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -115,10 +116,12 @@ fun BakingScreen(
     }
 }
 
+// Ratio fixo para exibição do anúncio em vídeo.
+// O conteúdo é escalonado com center-crop para preencher este espaço sem letterbox.
+private const val AD_DISPLAY_RATIO = 9f / 16f
+
 @Composable
 fun AdItem(ad: CustomNativeAd) {
-    val aspectRatio = ad.mediaContent?.aspectRatio?.takeIf { it > 0f } ?: (16f / 9f)
-
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -132,16 +135,17 @@ fun AdItem(ad: CustomNativeAd) {
             color = Color.Gray
         )
         AndroidView(
-            factory = { ctx ->
+            factory = { context ->
                 CustomNativeAdManager()
-                    .displayVideoCustomNativeAd(ad, ctx)
+                    .displayVideoCustomNativeAd(ad, context, cropToFill = true)
                     .also { view ->
                         view.post { (view.tag as? Runnable)?.run() }
                     }
             },
             modifier = Modifier
                 .fillMaxWidth()
-                .aspectRatio(aspectRatio)
+                .aspectRatio(AD_DISPLAY_RATIO)
+                .clipToBounds()
         )
     }
 }

@@ -1,8 +1,8 @@
 # AppTestGoogleAdManager 🚀
 
-Este projeto é uma **Prova de Conceito (PoC)** para demonstrar a integração do **Google Ad Manager** em um aplicativo Android moderno, utilizando **Jetpack Compose** e o formato de **Custom Native Ads (Anúncios Nativos Personalizados)**.
+This project is a **Proof of Concept (PoC)** to demonstrate **Google Ad Manager** integration in a modern Android application, using **Jetpack Compose** and the **Custom Native Ads** format.
 
-O objetivo principal é validar a exibição do formato "Shortz" (vídeos curtos) integrados de forma fluida em uma lista de conteúdo.
+The main goal is to validate the display of the "Shortz" format (short videos) seamlessly integrated into a content list.
 
 ## 📱 Demo
 
@@ -10,21 +10,21 @@ O objetivo principal é validar a exibição do formato "Shortz" (vídeos curtos
 |--------------------------|
 | <img src="docs/shortz_demo.gif" width="100%" alt="Shortz Video Demo"> |
 
-> *Nota: Os GIFs acima são ilustrativos para esta documentação.*
+> *Note: The GIFs above are illustrative for this documentation.*
 
 ---
 
-## 🛠️ Tecnologias Utilizadas
+## 🛠️ Technologies Used
 
 - **Kotlin** & **Jetpack Compose**
 - **Google Mobile Ads SDK (GAM)**: `com.google.android.libraries.ads.mobile.sdk:ads-mobile-sdk:1.1.0`
-- **Firebase AI (Gemini)**: Utilizado para funcionalidades de análise de imagem no contexto da aplicação de exemplo.
-- **Coroutines & Flow**: Para gerenciamento de estado assíncrono.
+- **Firebase AI (Gemini)**: Used for image analysis features within the sample application context.
+- **Coroutines & Flow**: For asynchronous state management.
 
-## 🏗️ Implementação
+## 🏗️ Implementation
 
-### 1. Inicialização do SDK
-O SDK é inicializado na `MainActivity` utilizando um ID de aplicação placeholder. O carregamento de anúncios só inicia após o callback de sucesso da inicialização.
+### 1. SDK Initialization
+The SDK is initialized in `MainActivity` using a placeholder application ID. Ad loading only starts after the successful initialization callback.
 
 ```kotlin
 val initializationConfig = InitializationConfig.Builder("ca-app-pub-3940256099942544~3347511713")
@@ -36,13 +36,13 @@ MobileAds.initialize(this, initializationConfig) {
 ```
 
 ### 2. Custom Native Ad Manager
-Criamos um `CustomNativeAdManager` para centralizar a lógica de:
-- **Carregamento**: Configuração do `NativeAdRequest` com `customFormatId` e `customTargeting`.
-- **Renderização**: Inflagem do layout XML (`layout_custom_native_ad.xml`) e vinculação dos assets do anúncio (Headline, Body, MediaContent).
-- **Suporte a Vídeo**: Uso do `MediaView` para renderizar o conteúdo de vídeo do Shortz, com controle de autoplay.
+We created a `CustomNativeAdManager` to centralize the logic for:
+- **Loading**: Configuring the `NativeAdRequest` with `customFormatId` and `customTargeting`.
+- **Rendering**: Inflating the XML layout (`layout_custom_native_ad.xml`) and binding ad assets (Headline, Body, MediaContent).
+- **Video Support**: Using `MediaView` to render Shortz video content, with autoplay control.
 
-### 3. Integração com Jetpack Compose
-Os anúncios são exibidos dentro de um `LazyColumn` no `BakingScreen`. Utilizamos `AndroidView` para integrar o componente nativo do SDK:
+### 3. Jetpack Compose Integration
+Ads are displayed within a `LazyColumn` in `BakingScreen`. We use `AndroidView` to integrate the native SDK component:
 
 ```kotlin
 AndroidView(
@@ -53,21 +53,113 @@ AndroidView(
 )
 ```
 
-## 📋 Funcionalidades Implementadas
+## 🎨 Ad Display Format Configurations
 
-- [x] Inicialização do Google Mobile Ads SDK.
-- [x] Carregamento de múltiplos anúncios nativos personalizados.
-- [x] Suporte a Custom Targeting (`tvg_pos: SHORTZ`).
-- [x] Renderização de MediaContent (Vídeo) com proporção dinâmica.
-- [x] Controle de Impressões e Cliques.
-- [x] Placeholder de carregamento enquanto o anúncio não está pronto.
-
-## 🚀 Como Executar
-
-1. Clone o repositório.
-2. Certifique-se de ter o arquivo `google-services.json` (se necessário para o Firebase).
-3. Sincronize o Gradle.
-4. Execute o app em um emulador ou dispositivo físico.
+The project explores different ways to control how the ad occupies screen space. Each option is a trade-off between fidelity to the original content and predictability of the layout.
 
 ---
-Desenvolvido como referência técnica para implementações de Google Ad Manager.
+
+### 1. Fixed Local Aspect Ratio
+
+**Where:** `BakingScreen.kt` — `AD_DISPLAY_RATIO` constant and `Modifier.aspectRatio()`
+
+```kotlin
+private const val AD_DISPLAY_RATIO = 9f / 16f
+
+Modifier
+    .fillMaxWidth()
+    .aspectRatio(AD_DISPLAY_RATIO)
+```
+
+The container is locked to a specific ratio (e.g. 9:16 portrait) regardless of the video's native ratio. The layout is always predictable and does not shift when the ad loads. The trade-off is that the video content may not fill the space perfectly without additional scaling.
+
+---
+
+### 2. Center-Crop (cropToFill)
+
+**Where:** `CustomNativeAdManager.displayVideoCustomNativeAd()` — `cropToFill` parameter + `applyCenterCropScale()`
+
+```kotlin
+CustomNativeAdManager()
+    .displayVideoCustomNativeAd(ad, context, cropToFill = true)
+```
+
+When `cropToFill = true`, the `MediaView` is scaled uniformly so that the video fills the container entirely, cropping the overflow. The container must have `clipChildren = true` (or `Modifier.clipToBounds()` on the Compose side) to hide the cropped excess.
+
+- **Use with fixed ratio:** combines with option 1 to guarantee a full-bleed video in a predictable container.
+- **Scale logic:** scales by height when the video is wider than the container, and by width when it is taller.
+
+---
+
+### 3. Letterbox / Default (cropToFill = false)
+
+**Where:** `CustomNativeAdManager.displayVideoCustomNativeAd()` — default behavior
+
+```kotlin
+CustomNativeAdManager()
+    .displayVideoCustomNativeAd(ad, context, cropToFill = false)
+```
+
+The `MediaView` preserves the video's native aspect ratio. When the container ratio differs, black bars appear (letterbox or pillarbox). No content is cropped; the full frame is always visible.
+
+---
+
+### 4. Dynamic Aspect Ratio (Fluid)
+
+**Where:** `CustomNativeAdManager` — reads `mediaContent.aspectRatio`
+
+```kotlin
+val videoAspectRatio = mediaContent.aspectRatio.takeIf { it > 0f } ?: (16f / 9f)
+```
+
+The container adapts to the ratio reported by the ad server. Each ad can have a different ratio, so the layout height changes per item. Less predictable for the feed but ensures pixel-perfect fidelity with no cropping.
+
+---
+
+### 5. Static Image Fallback
+
+**Where:** `CustomNativeAdManager.displayVideoCustomNativeAd()` — `else` branch when `mediaContent == null`
+
+```kotlin
+val mainImage = customNativeAd.getImage("MainImage") ?: customNativeAd.getImage("mainImage")
+```
+
+When the ad carries no video (`mediaContent` is `null`), the manager falls back to a static image asset (`MainImage`). The image is rendered with `adjustViewBounds = true` so it wraps to its own height.
+
+---
+
+### 6. Video Autoplay and Loop
+
+**Where:** `CustomNativeAdManager` — `VideoController.VideoLifecycleCallbacks`
+
+```kotlin
+videoController?.videoLifecycleCallbacks = object : VideoController.VideoLifecycleCallbacks {
+    override fun onVideoEnd() { videoController.play() }
+}
+// Deferred play — runs after the Surface is ready to avoid a black first frame.
+adView.tag = Runnable { videoController?.play() }
+view.post { (view.tag as? Runnable)?.run() }
+```
+
+Play is deferred via `View.post()` so the `MediaView` Surface is ready before the first frame is rendered (avoids a black flash). `onVideoEnd()` restarts playback to create a seamless loop.
+
+---
+
+## 📋 Implemented Features
+
+- [x] Google Mobile Ads SDK initialization.
+- [x] Loading multiple custom native ads.
+- [x] Custom Targeting support (`tvg_pos: SHORTZ`).
+- [x] MediaContent (Video) rendering with dynamic aspect ratio.
+- [x] Impression and Click tracking.
+- [x] Loading placeholder while the ad is not ready.
+
+## 🚀 How to Run
+
+1. Clone the repository.
+2. Ensure you have the `google-services.json` file (if required for Firebase).
+3. Sync Gradle.
+4. Run the app on an emulator or physical device.
+
+---
+Developed as a technical reference for Google Ad Manager implementations.
