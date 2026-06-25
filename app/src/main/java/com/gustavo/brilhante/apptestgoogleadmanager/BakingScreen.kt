@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -63,7 +64,7 @@ val imageDescriptions = arrayOf(
 )
 
 enum class BakingTab {
-    VIDEO, EMBAIXADINHA
+    VIDEO, EMBAIXADINHA, NATIVE_EMBAIXADINHA
 }
 
 @Composable
@@ -87,6 +88,12 @@ fun BakingScreen(
                     label = { Text("Embaixadinha") },
                     icon = { Icon(Icons.Default.Star, contentDescription = null) }
                 )
+                NavigationBarItem(
+                    selected = selectedTab == BakingTab.NATIVE_EMBAIXADINHA,
+                    onClick = { selectedTab = BakingTab.NATIVE_EMBAIXADINHA },
+                    label = { Text("Nativo") },
+                    icon = { Icon(Icons.Default.Favorite, contentDescription = null) }
+                )
             }
         }
     ) { innerPadding ->
@@ -94,6 +101,7 @@ fun BakingScreen(
             when (selectedTab) {
                 BakingTab.VIDEO -> BakingTabContent(bakingViewModel)
                 BakingTab.EMBAIXADINHA -> EmbaixadinhaTabContent(bakingViewModel)
+                BakingTab.NATIVE_EMBAIXADINHA -> NativeEmbaixadinhaScreen(bakingViewModel)
             }
         }
     }
