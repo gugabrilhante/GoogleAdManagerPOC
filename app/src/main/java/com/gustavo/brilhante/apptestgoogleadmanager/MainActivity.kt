@@ -58,24 +58,55 @@ class MainActivity : ComponentActivity() {
     private fun loadAd() {
         val manager = CustomNativeAdManager()
 
-        // Dados para a PoC do formato Shortz
-        val adUnitId = "/32352161/formatos/ShortzVideo"
-        val customFormatId = "12420626"
-        val customTargeting = mapOf("tvg_pos" to "SHORTZ")
+        // 1. Carregar anúncios de Vídeo Vertical (Shortz)
+        val shortzAdUnitId = "/32352161/formatos/ShortzVideo"
+        val shortzCustomFormatId = "12420626"
+        val shortzCustomTargeting = mapOf("tvg_pos" to "SHORTZ")
 
+        Log.d("AdManager", "Solicitando anúncio Shortz: $shortzAdUnitId")
         manager.loadCustomNativeAd(
             context = this,
-            adUnitId = adUnitId,
-            customFormatId = customFormatId,
+            adUnitId = shortzAdUnitId,
+            customFormatId = shortzCustomFormatId,
             numberOfAds = 5,
-            customTargeting = customTargeting,
+            customTargeting = shortzCustomTargeting,
             onAdLoaded = { customNativeAd ->
+                Log.d("AdManager", "Anúncio Shortz carregado com sucesso.")
                 runOnUiThread {
                     viewModel.addAd(customNativeAd)
                 }
             },
             onAdFailed = { error ->
-                Log.e("AdManager", "Falha ao carregar anúncio: ${error.message}")
+                Log.e("AdManager", "Falha ao carregar anúncio Shortz ($shortzAdUnitId): ${error.message} - Erro: ${error.code}")
+                runOnUiThread {
+                    viewModel.setAdError("Erro Shortz: ${error.message}")
+                }
+            }
+        )
+
+        // 2. Carregar anúncio de Embaixadinha (Playable)
+        val embaixadinhaAdUnitId = "/32352161/formatos/Embaixadinha"
+        val embaixadinhaCustomFormatId = "12517633"
+        val embaixadinhaCustomTargeting = mapOf("tvg_pos" to "EMBAIXADINHA")
+
+        Log.d("AdManager", "Solicitando anúncio Embaixadinha: $embaixadinhaAdUnitId (Format: $embaixadinhaCustomFormatId)")
+        manager.loadCustomNativeAd(
+            context = this,
+            adUnitId = embaixadinhaAdUnitId,
+            customFormatId = embaixadinhaCustomFormatId,
+            numberOfAds = 1,
+            customTargeting = embaixadinhaCustomTargeting,
+            onAdLoaded = { customNativeAd ->
+                Log.d("AdManager", "Anúncio Embaixadinha carregado com sucesso.")
+                runOnUiThread {
+                    viewModel.addEmbaixadinhaAd(customNativeAd)
+                }
+            },
+            onAdFailed = { error ->
+                Log.e("AdManager", "Falha ao carregar anúncio Embaixadinha ($embaixadinhaAdUnitId): ${error.message} - Erro: ${error.code}")
+                runOnUiThread {
+                    viewModel.setAdError("Erro Embaixadinha: ${error.message} (Código: ${error.code})")
+                }
             }
         )
     }

@@ -22,6 +22,12 @@ class BakingViewModel : ViewModel() {
     private val _adsState = MutableStateFlow<List<CustomNativeAd>>(emptyList())
     val adsState: StateFlow<List<CustomNativeAd>> = _adsState.asStateFlow()
 
+    private val _embaixadinhaAdsState = MutableStateFlow<List<CustomNativeAd>>(emptyList())
+    val embaixadinhaAdsState: StateFlow<List<CustomNativeAd>> = _embaixadinhaAdsState.asStateFlow()
+
+    private val _adError = MutableStateFlow<String?>(null)
+    val adError: StateFlow<String?> = _adError.asStateFlow()
+
     private val generativeModel = Firebase.ai.generativeModel(
         modelName = "gemini-flash-latest",
     )
@@ -48,5 +54,13 @@ class BakingViewModel : ViewModel() {
 
     fun addAd(ad: CustomNativeAd) {
         _adsState.value = _adsState.value + ad
+    }
+
+    fun addEmbaixadinhaAd(ad: CustomNativeAd) {
+        _embaixadinhaAdsState.value = _embaixadinhaAdsState.value + ad
+    }
+
+    fun setAdError(message: String) {
+        _adError.value = message
     }
 }

@@ -7,7 +7,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -17,10 +16,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -34,6 +38,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalResources
@@ -57,10 +62,45 @@ val imageDescriptions = arrayOf(
     R.string.image3_description,
 )
 
+enum class BakingTab {
+    VIDEO, EMBAIXADINHA
+}
+
 @Composable
 fun BakingScreen(
     bakingViewModel: BakingViewModel = viewModel()
 ) {
+    var selectedTab by remember { mutableStateOf(BakingTab.VIDEO) }
+
+    Scaffold(
+        bottomBar = {
+            NavigationBar {
+                NavigationBarItem(
+                    selected = selectedTab == BakingTab.VIDEO,
+                    onClick = { selectedTab = BakingTab.VIDEO },
+                    label = { Text("Vídeo vertical") },
+                    icon = { Icon(Icons.Default.PlayArrow, contentDescription = null) }
+                )
+                NavigationBarItem(
+                    selected = selectedTab == BakingTab.EMBAIXADINHA,
+                    onClick = { selectedTab = BakingTab.EMBAIXADINHA },
+                    label = { Text("Embaixadinha") },
+                    icon = { Icon(Icons.Default.Star, contentDescription = null) }
+                )
+            }
+        }
+    ) { innerPadding ->
+        Box(modifier = Modifier.padding(innerPadding)) {
+            when (selectedTab) {
+                BakingTab.VIDEO -> BakingTabContent(bakingViewModel)
+                BakingTab.EMBAIXADINHA -> EmbaixadinhaTabContent(bakingViewModel)
+            }
+        }
+    }
+}
+
+@Composable
+fun BakingTabContent(bakingViewModel: BakingViewModel) {
     val selectedImage = remember { mutableIntStateOf(0) }
     val placeholderPrompt = stringResource(R.string.prompt_placeholder)
     val placeholderResult = stringResource(R.string.results_placeholder)
@@ -70,47 +110,110 @@ fun BakingScreen(
     val adsState by bakingViewModel.adsState.collectAsState()
     val resources = LocalResources.current
 
-    Scaffold { innerPadding ->
-        LazyColumn(
-            modifier = Modifier
-                .padding(innerPadding)
-                .fillMaxSize()
-        ) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        item {
+            Text(
+                text = stringResource(R.string.baking_title),
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.padding(16.dp)
+            )
+        }
+
+        images.forEachIndexed { index, image ->
             item {
+                RecipeItem(index, image, imageDescriptions[index], selectedImage.intValue) {
+                    selectedImage.intValue = index
+                }
+            }
+
+            // Insere um anúncio após cada imagem
+            item {
+                if (index < adsState.size) {
+                    AdItem(adsState[index])
+                } else {
+                    AdPlaceholder()
+                }
+            }
+        }
+
+        // Campo de Input e Resultado (Gemini)
+        item {
+            BakingControls(prompt, onPromptChange = { prompt = it }) {
+                val bitmap = BitmapFactory.decodeResource(resources, images[selectedImage.intValue])
+                bakingViewModel.sendPrompt(bitmap, prompt)
+            }
+        }
+
+        item {
+            BakingResult(uiState, result)
+        }
+    }
+}
+
+@Composable
+fun EmbaixadinhaTabContent(viewModel: BakingViewModel) {
+    val adsState by viewModel.embaixadinhaAdsState.collectAsState()
+    val adError by viewModel.adError.collectAsState()
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "Teste Formato Embaixadinha",
+            style = MaterialTheme.typography.headlineSmall,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
+
+        if (adError != null && adsState.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .background(Color(0xFFFFEBEE)),
+                contentAlignment = Alignment.Center
+            ) {
                 Text(
-                    text = stringResource(R.string.baking_title),
-                    style = MaterialTheme.typography.titleLarge,
+                    text = "Erro ao carregar anúncio:\n$adError",
+                    color = MaterialTheme.colorScheme.error,
+                    textAlign = TextAlign.Center,
                     modifier = Modifier.padding(16.dp)
                 )
             }
-
-            images.forEachIndexed { index, image ->
-                item {
-                    RecipeItem(index, image, imageDescriptions[index], selectedImage.intValue) {
-                        selectedImage.intValue = index
-                    }
-                }
-
-                // Insere um anúncio após cada imagem
-                item {
-                    if (index < adsState.size) {
-                        AdItem(adsState[index])
-                    } else {
-                        AdPlaceholder()
-                    }
-                }
+        } else if (adsState.isNotEmpty()) {
+            val ad = adsState.first()
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .border(1.dp, Color.LightGray)
+                    .clipToBounds()
+            ) {
+                AndroidView(
+                    factory = { context ->
+                        CustomNativeAdManager()
+                            .displayWebCustomNativeAd(ad, context)
+                    },
+                    modifier = Modifier.fillMaxSize()
+                )
             }
-
-            // Campo de Input e Resultado (Gemini)
-            item {
-                BakingControls(prompt, onPromptChange = { prompt = it }) {
-                    val bitmap = BitmapFactory.decodeResource(resources, images[selectedImage.intValue])
-                    bakingViewModel.sendPrompt(bitmap, prompt)
+        } else {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .background(Color(0xFFF0F0F0)),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    CircularProgressIndicator()
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("Buscando anúncio Embaixadinha...", color = Color.Gray)
                 }
-            }
-
-            item {
-                BakingResult(uiState, result)
             }
         }
     }

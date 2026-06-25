@@ -9,6 +9,8 @@ import android.view.ViewTreeObserver
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.TextView
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import com.google.android.libraries.ads.mobile.sdk.common.LoadAdError
 import com.google.android.libraries.ads.mobile.sdk.nativead.CustomNativeAd
 import com.google.android.libraries.ads.mobile.sdk.common.VideoController
@@ -183,6 +185,34 @@ class CustomNativeAdManager {
         mediaView.pivotY = containerH / 2f
 
         Log.d("AdManager", "CenterCrop scale=$scale videoRatio=$videoAspectRatio containerRatio=$containerRatio")
+    }
+
+    fun displayWebCustomNativeAd(
+        customNativeAd: CustomNativeAd,
+        context: Context
+    ): View {
+        val webView = WebView(context).apply {
+            settings.javaScriptEnabled = true
+            settings.domStorageEnabled = true
+            webViewClient = WebViewClient()
+            layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+        }
+
+        val url = customNativeAd.getText("webAd")
+        Log.d("AdManager", "Renderizando Embaixadinha via WebView. URL: $url")
+        
+        if (url != null) {
+            webView.loadUrl(url.toString())
+        } else {
+            Log.e("AdManager", "Asset 'webAd' não encontrado no anúncio customizado.")
+        }
+
+        customNativeAd.recordImpression()
+
+        return webView
     }
 
     fun renderAdChoices(customNativeAd: CustomNativeAd, adView: View) {
